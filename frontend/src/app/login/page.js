@@ -47,20 +47,32 @@ export default function LoginPage() {
     setTimeout(() => { 
        setLoading(false); 
 
-       let userData = { name: formData.email.split('@')[0], email: formData.email, memberTier: 'Yatra Gold' };
+       let userData = null;
        if (typeof window !== 'undefined') {
-          const registered = localStorage.getItem('yatra_mock_registered_user');
-          if (registered) {
-             const parsed = JSON.parse(registered);
-             if (parsed.email === formData.email) {
-                userData.name = parsed.name;
-             }
+          const registeredStr = localStorage.getItem('yatra_mock_registered_user');
+          if (!registeredStr) {
+             toast.error('Account does not exist. Please sign up first!');
+             return;
           }
+          
+          const parsed = JSON.parse(registeredStr);
+          if (parsed.email !== formData.email) {
+             toast.error('Account does not exist with this email. Please sign up first!');
+             return;
+          }
+          
+          if (formData.password !== '12345678' && formData.password !== parsed.password && !parsed.password) {
+             // For strict password mocking later if needed, right now any password works if email matches
+          }
+          
+          userData = { name: parsed.name, email: parsed.email, memberTier: 'Yatra Gold' };
        }
 
-       dispatch(loginUser(userData));
-       toast.success('Logged in successfully!'); 
-       router.push("/"); 
+       if (userData) {
+          dispatch(loginUser(userData));
+          toast.success('Logged in successfully!'); 
+          router.push("/"); 
+       }
     }, 1500);
   };
 

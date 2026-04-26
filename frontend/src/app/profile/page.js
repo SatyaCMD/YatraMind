@@ -14,26 +14,16 @@ export default function UserProfile() {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [pnrInput, setPnrInput] = useState('');
   const [pnrStatus, setPnrStatus] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [upcomingJourneys, setUpcomingJourneys] = useState([]);
 
   useEffect(() => {
      const stored = JSON.parse(localStorage.getItem('yatraJourneys') || '[]');
-     if (stored.length === 0) {
-        const initial = [
-          { id: 'BK-9941A', type: 'Flight', from: 'Delhi (DEL)', to: 'Mumbai (BOM)', date: '12 May 2026', status: 'Confirmed' },
-          { id: 'BK-2287C', type: 'Cab', from: 'Mumbai Airport', to: 'Taj Palace', date: '12 May 2026', status: 'Confirmed' }
-        ];
-        localStorage.setItem('yatraJourneys', JSON.stringify(initial));
-        setUpcomingJourneys(initial);
-     } else {
-        setUpcomingJourneys(stored);
-     }
+     setUpcomingJourneys(stored);
   }, []);
 
-  const travelDone = [
-    { id: 'BK-1029X', type: 'Train', icon: Train, from: 'Bangalore', to: 'Chennai', date: '14 Feb 2026', status: 'Completed' }
-  ];
+  const travelDone = [];
 
   const handleCancel = (id) => {
     toast.success(`Cancellation request submitted for Booking ID: ${id}`);
@@ -147,12 +137,12 @@ export default function UserProfile() {
     toast.success('Ticket downloaded successfully!');
   };
 
-  const handleDeleteAccount = () => {
-    if (confirm('Are you absolutely sure you want to completely permanently delete this account?')) {
-       toast.error('Account deleted successfully.');
-       dispatch(logoutUser());
-       window.location.href = "/signup";
-    }
+  const executeDeleteAccount = () => {
+     setShowDeleteConfirm(false);
+     toast.error('Account completely deleted.');
+     dispatch(logoutUser());
+     if (typeof window !== 'undefined') localStorage.removeItem('yatra_mock_registered_user');
+     window.location.href = "/signup";
   };
 
   return (
@@ -185,7 +175,7 @@ export default function UserProfile() {
                <button onClick={() => setActiveTab('past')} className={`w-full text-left px-4 py-3 rounded-xl font-bold transition ${activeTab === 'past' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>Travel History</button>
                <button onClick={() => setActiveTab('cancel')} className={`w-full text-left px-4 py-3 rounded-xl font-bold transition ${activeTab === 'cancel' ? 'bg-orange-500 text-white' : 'text-orange-500 hover:bg-orange-50'}`}>Cancel a Ticket</button>
                <button onClick={() => setActiveTab('edit')} className={`w-full text-left px-4 py-3 rounded-xl font-bold transition ${activeTab === 'edit' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>Edit Profile</button>
-               <button onClick={handleDeleteAccount} className={`w-full flex items-center justify-between text-left px-4 py-3 rounded-xl font-bold transition text-red-600 hover:bg-red-50 mt-4 border border-red-100`}>
+               <button onClick={() => setShowDeleteConfirm(true)} className={`w-full flex items-center justify-between text-left px-4 py-3 rounded-xl font-bold transition text-red-600 hover:bg-red-50 mt-4 border border-red-100`}>
                   Delete Account <Trash2 className="w-4 h-4" />
                </button>
             </div>
@@ -223,29 +213,40 @@ export default function UserProfile() {
 
              <h2 className="text-2xl font-bold text-gray-900 mb-6">Upcoming Journeys</h2>
              <div className="space-y-4">
-               {upcomingJourneys.map(b => (
-                  <div key={b.id} className="border border-gray-100 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-                     <div className="flex items-center gap-4">
-                       <div className="bg-blue-50 text-blue-600 p-3 rounded-lg">
-                          {b.type === 'Flight' ? <Plane className="w-6 h-6"/> :
-                           b.type === 'Cab' ? <Car className="w-6 h-6"/> :
-                           b.type === 'Bus' ? <Bus className="w-6 h-6"/> : 
-                           <Train className="w-6 h-6"/>}
-                       </div>
-                       <div>
-                         <span className="text-xs font-bold text-gray-400">ID: {b.id}</span>
-                         <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">{b.from} <ArrowRight className="w-4 h-4 text-gray-300"/> {b.to}</h3>
-                         <p className="text-sm text-gray-500 flex items-center gap-1"><Calendar className="w-3 h-3"/> {b.date}</p>
-                       </div>
+               {upcomingJourneys.length === 0 ? (
+                  <div className="border border-dashed border-gray-300 rounded-2xl p-12 text-center bg-gray-50/50">
+                     <div className="w-16 h-16 bg-blue-50 text-blue-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MapPin className="w-8 h-8" />
                      </div>
-                     <div className="flex flex-col items-end gap-2">
-                       <span className="bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-bold">{b.status}</span>
-                       <button onClick={() => downloadTicketPDF(b)} className="text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition">
-                          <DownloadCloud className="w-4 h-4"/> Download Ticket
-                       </button>
-                     </div>
+                     <h3 className="text-lg font-bold text-gray-900 mb-2">No Upcoming Journeys</h3>
+                     <p className="text-gray-500 mb-6 max-w-sm mx-auto">You haven't booked any trips yet. Discover your next adventure using our AI engine!</p>
+                     <Link href="/" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-xl transition shadow-lg">Start Booking</Link>
                   </div>
-               ))}
+               ) : (
+                 upcomingJourneys.map(b => (
+                   <div key={b.id} className="border border-gray-100 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="bg-blue-50 text-blue-600 p-3 rounded-lg">
+                           {b.type === 'Flight' ? <Plane className="w-6 h-6"/> :
+                            b.type === 'Cab' ? <Car className="w-6 h-6"/> :
+                            b.type === 'Bus' ? <Bus className="w-6 h-6"/> : 
+                            <Train className="w-6 h-6"/>}
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-gray-400">ID: {b.id}</span>
+                          <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">{b.from} <ArrowRight className="w-4 h-4 text-gray-300"/> {b.to}</h3>
+                          <p className="text-sm text-gray-500 flex items-center gap-1"><Calendar className="w-3 h-3"/> {b.date}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-bold">{b.status}</span>
+                        <button onClick={() => downloadTicketPDF(b)} className="text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition">
+                           <DownloadCloud className="w-4 h-4"/> Download Ticket
+                        </button>
+                      </div>
+                   </div>
+                 ))
+               )}
              </div>
            </div>
          )}
@@ -254,19 +255,25 @@ export default function UserProfile() {
            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
              <h2 className="text-2xl font-bold text-gray-900 mb-6">Travel Done</h2>
              <div className="space-y-4">
-               {travelDone.map(b => (
-                 <div key={b.id} className="border border-gray-100 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 opacity-75">
-                    <div className="flex items-center gap-4">
-                      <div className="bg-gray-100 text-gray-600 p-3 rounded-lg"><b.icon className="w-6 h-6"/></div>
-                      <div>
-                        <span className="text-xs font-bold text-gray-400">ID: {b.id}</span>
-                        <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">{b.from} <ArrowRight className="w-4 h-4 text-gray-300"/> {b.to}</h3>
-                        <p className="text-sm text-gray-500 flex items-center gap-1"><Calendar className="w-3 h-3"/> {b.date}</p>
+               {travelDone.length === 0 ? (
+                  <div className="border border-dashed border-gray-300 rounded-2xl p-12 text-center bg-gray-50/50">
+                     <p className="text-gray-500 font-medium">You have no past travel history.</p>
+                  </div>
+               ) : (
+                 travelDone.map(b => (
+                   <div key={b.id} className="border border-gray-100 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 opacity-75">
+                      <div className="flex items-center gap-4">
+                        <div className="bg-gray-100 text-gray-600 p-3 rounded-lg"><b.icon className="w-6 h-6"/></div>
+                        <div>
+                          <span className="text-xs font-bold text-gray-400">ID: {b.id}</span>
+                          <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">{b.from} <ArrowRight className="w-4 h-4 text-gray-300"/> {b.to}</h3>
+                          <p className="text-sm text-gray-500 flex items-center gap-1"><Calendar className="w-3 h-3"/> {b.date}</p>
+                        </div>
                       </div>
-                    </div>
-                    <span className="bg-gray-100 text-gray-600 px-4 py-1 rounded-full text-sm font-bold">{b.status}</span>
-                 </div>
-               ))}
+                      <span className="bg-gray-100 text-gray-600 px-4 py-1 rounded-full text-sm font-bold">{b.status}</span>
+                   </div>
+                 ))
+               )}
              </div>
            </div>
          )}
@@ -276,12 +283,18 @@ export default function UserProfile() {
              <h2 className="text-2xl font-bold text-red-600 mb-2 flex items-center gap-2"><TicketX className="w-6 h-6"/> Cancel Ticket</h2>
              <p className="text-gray-500 mb-8">Select an upcoming booking to initiate a refund.</p>
              <div className="grid grid-cols-1 gap-4">
-               {upcomingJourneys.map(b => (
-                 <div key={b.id} className="border border-red-50 hover:border-red-200 rounded-xl p-4 flex justify-between items-center transition bg-red-50/20">
-                    <span className="font-bold text-gray-800">{b.from} to {b.to} ({b.date})</span>
-                    <button onClick={() => handleCancel(b.id)} className="bg-red-500 text-white font-bold px-4 py-2 rounded-lg text-sm hover:bg-red-600">Cancel</button>
-                 </div>
-               ))}
+               {upcomingJourneys.length === 0 ? (
+                  <div className="border border-dashed border-red-200 rounded-2xl p-8 text-center bg-red-50/20">
+                     <p className="text-red-400 font-medium">No valid tickets available to cancel.</p>
+                  </div>
+               ) : (
+                 upcomingJourneys.map(b => (
+                   <div key={b.id} className="border border-red-50 hover:border-red-200 rounded-xl p-4 flex justify-between items-center transition bg-red-50/20">
+                      <span className="font-bold text-gray-800">{b.from} to {b.to} ({b.date})</span>
+                      <button onClick={() => handleCancel(b.id)} className="bg-red-500 text-white font-bold px-4 py-2 rounded-lg text-sm hover:bg-red-600">Cancel</button>
+                   </div>
+                 ))
+               )}
              </div>
             </div>
           )}
@@ -325,6 +338,28 @@ export default function UserProfile() {
           )}
          </div>
       </div>
+
+      {showDeleteConfirm && (
+         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+            <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl transform transition-all">
+               <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Trash2 className="w-8 h-8" />
+               </div>
+               <h3 className="text-2xl font-bold text-gray-900 text-center mb-2">Delete Account?</h3>
+               <p className="text-gray-500 text-center mb-8">This action is irreversible. All your upcoming journeys, travel history, and Yatra Gold status will be permanently erased.</p>
+               
+               <div className="flex gap-4">
+                  <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3.5 rounded-xl transition">
+                     Cancel
+                  </button>
+                  <button onClick={executeDeleteAccount} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-red-200 transition">
+                     Yes, Delete
+                  </button>
+               </div>
+            </div>
+         </div>
+      )}
+
     </div>
   );
 }
