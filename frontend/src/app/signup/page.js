@@ -26,6 +26,8 @@ export default function SignupPage() {
          name: formData.name,
          email: formData.email
       }));
+      // Wipe any existing/mock journeys for a fresh account
+      localStorage.removeItem('yatraJourneys');
     }
     
     // register logic here
