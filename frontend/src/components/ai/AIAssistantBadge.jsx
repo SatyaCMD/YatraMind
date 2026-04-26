@@ -2,8 +2,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
-import { Sparkles, X, MapPin, DollarSign, Clock, Loader2, Send } from 'lucide-react';
+import { Sparkles, X, MapPin, IndianRupee, DollarSign, Clock, Loader2, Send } from 'lucide-react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 export default function AIAssistantBadge() {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,7 +20,8 @@ export default function AIAssistantBadge() {
       const res = await axios.post('http://localhost:5000/api/ai/plan', { query: aiQuery });
       setAiData(res.data.data);
     } catch (err) {
-      alert('Error fetching AI data');
+      console.error(err);
+      toast.error(err?.response?.data?.message || 'AI generation failed due to a server error. Please try again.');
     }
     setAiLoading(false);
   };
@@ -89,8 +91,11 @@ export default function AIAssistantBadge() {
                            <MapPin className="text-blue-500 w-5 h-5" /> Destination: {aiData.location}
                          </h3>
                          <div className="flex gap-4 mt-3">
-                            <span className="flex items-center gap-1 bg-violet-50 px-3 py-1 rounded-lg text-violet-700 text-sm font-semibold"><DollarSign className="w-4 h-4"/> ₹{aiData.budget}</span>
-                            <span className="flex items-center gap-1 bg-indigo-50 px-3 py-1 rounded-lg text-indigo-700 text-sm font-semibold"><Clock className="w-4 h-4"/> {aiData.duration}</span>
+                            <span className="flex items-center gap-1 bg-violet-50 px-3 py-1 rounded-lg text-violet-700 text-sm font-semibold">
+                               {aiData.currencySymbol === '$' ? <DollarSign className="w-4 h-4"/> : <IndianRupee className="w-4 h-4"/>} 
+                               {aiData.budget || "-"}
+                            </span>
+                            <span className="flex items-center gap-1 bg-indigo-50 px-3 py-1 rounded-lg text-indigo-700 text-sm font-semibold"><Clock className="w-4 h-4"/> {aiData.duration || "5 days"}</span>
                          </div>
                       </div>
 
@@ -100,27 +105,27 @@ export default function AIAssistantBadge() {
                             <div className="grid grid-cols-3 gap-2 sm:gap-3">
                                 <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm text-center">
                                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Flight</p>
-                                   <p className="text-indigo-600 font-black">₹{aiData.lowestPrices.flight}</p>
+                                   <p className="text-indigo-600 font-black">{aiData.currencySymbol || '₹'}{aiData.lowestPrices.flight}</p>
                                 </div>
                                 <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm text-center">
                                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Train</p>
-                                   <p className="text-indigo-600 font-black">₹{aiData.lowestPrices.train}</p>
+                                   <p className="text-indigo-600 font-black">{aiData.currencySymbol || '₹'}{aiData.lowestPrices.train}</p>
                                 </div>
                                 <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm text-center">
                                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Bus</p>
-                                   <p className="text-indigo-600 font-black">₹{aiData.lowestPrices.bus}</p>
+                                   <p className="text-indigo-600 font-black">{aiData.currencySymbol || '₹'}{aiData.lowestPrices.bus}</p>
                                 </div>
                                 <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm text-center">
                                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Cab</p>
-                                   <p className="text-indigo-600 font-black">₹{aiData.lowestPrices.cab}</p>
+                                   <p className="text-indigo-600 font-black">{aiData.currencySymbol || '₹'}{aiData.lowestPrices.cab}</p>
                                 </div>
                                 <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm text-center">
                                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Hotel</p>
-                                   <p className="text-indigo-600 font-black">₹{aiData.lowestPrices.hotel}</p>
+                                   <p className="text-indigo-600 font-black">{aiData.currencySymbol || '₹'}{aiData.lowestPrices.hotel}</p>
                                 </div>
                                 <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm text-center">
                                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Villa</p>
-                                   <p className="text-indigo-600 font-black">₹{aiData.lowestPrices.villa}</p>
+                                   <p className="text-indigo-600 font-black">{aiData.currencySymbol || '₹'}{aiData.lowestPrices.villa}</p>
                                 </div>
                             </div>
                          </div>
@@ -151,7 +156,7 @@ export default function AIAssistantBadge() {
                              <div key={idx} className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm hover:border-indigo-200 transition">
                                <h5 className="font-bold text-gray-900 text-sm">{hotel.name}</h5>
                                <div className="flex justify-between items-center mt-2">
-                                 <span className="text-indigo-600 font-bold text-sm">₹{hotel.price}<span className="text-xs text-gray-400 font-normal">/nt</span></span>
+                                 <span className="text-indigo-600 font-bold text-sm">{aiData.currencySymbol || '₹'}{hotel.price}<span className="text-xs text-gray-400 font-normal">/nt</span></span>
                                  <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-md">★ {hotel.rating}</span>
                                </div>
                              </div>
